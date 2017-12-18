@@ -647,6 +647,13 @@ void TagReader::ParseOggTag(const TagLib::Ogg::FieldListMap& map,
   if (!map["METADATA_BLOCK_PICTURE"].isEmpty())
     song->set_art_automatic(kEmbeddedCover);
 
+  if (!map["RATING"].isEmpty() && song->rating() <= 0) {
+    int rating = TStringToQString(map["RATING"].front()).trimmed().toInt();
+    if (rating >= 10)
+      rating /= 20;
+    song->set_rating(rating / 5.0);
+  }
+
   if (!map["FMPS_RATING"].isEmpty() && song->rating() <= 0)
     song->set_rating(
         TStringToQString(map["FMPS_RATING"].front()).trimmed().toFloat());
@@ -718,6 +725,9 @@ void TagReader::SetFMPSStatisticsVorbisComments(
 void TagReader::SetFMPSRatingVorbisComments(
     TagLib::Ogg::XiphComment* vorbis_comments,
     const pb::tagreader::SongMetadata& song) const {
+  vorbis_comments->addField(
+      "RATING", QStringToTaglibString(QString::number(static_cast<int>(song.rating() * 5))),
+      true);
   vorbis_comments->addField(
       "FMPS_RATING", QStringToTaglibString(QString::number(song.rating())),
       true);
